@@ -6,6 +6,8 @@
 
 
 
+#### 思考题1
+
 ```
 思考题 1：阅读 `_start` 函数的开头，尝试说明 ChCore 是如何让其中一个核首先进入初始化流程，并让其他核暂停执行的。
 ```
@@ -27,6 +29,8 @@ Affinity level 0. The level identifies individual threads within a multithreaded
 
 
 
+#### 练习题2
+
 ```
 练习题 2：在 `arm64_elX_to_el1` 函数的 `LAB 1 TODO 1` 处填写一行汇编代码，获取 CPU 当前异常级别。
 提示：通过 `CurrentEL` 系统寄存器可获得当前异常级别。通过 GDB 在指令级别单步调试可验证实现是否正确。
@@ -44,11 +48,13 @@ mrs将系统寄存器move到通用寄存器。
 
 使用GDB进行验证：
 
-![](./1-1.png)
+![](./assets/1-1.png)
 
 从上图可以看出，在经过mrs x9, currentel后，x9寄存器的值为12。而反汇编代码中CURRENTEL_EL1被翻译为#0x4，CURRENTEL_EL2被翻译为#0x8，猜测x9的值为12应当表示我们处于EL3。
 
 
+
+#### 练习题3
 
 ```
 练习题 3：在 `arm64_elX_to_el1` 函数的 `LAB 1 TODO 2` 处填写大约 4 行汇编代码，设置从 EL3 跳转到 EL1 所需的 `elr_el3` 和 `spsr_el3` 寄存器值。具体地，我们需要在跳转到 EL1 时暂时屏蔽所有中断、并使用内核栈（`sp_el1` 寄存器指定的栈指针）。
@@ -68,11 +74,13 @@ mrs将系统寄存器move到通用寄存器。
 
 使用GDB进行验证：
 
-![](./1-2.png)
+![](./assets/1-2.png)
 
 从图中可以看出，0x80010 bl 0x88000<arm64_elX_to_el1>这一行应该是arm64_elX_to_el1的调用，在补上上面四行汇编后，程序执行流成功执行了函数调用行的下一行，说明可以成功从arm64_elX_to_el1返回_start。
 
 
+
+#### 思考题4
 
 ```
 思考题 4：结合此前 ICS 课的知识，并参考 `kernel.img` 的反汇编（通过 `aarch64-linux-gnu-objdump -S` 可获得），说明为什么要在进入 C 函数之前设置启动栈。如果不设置，会发生什么？
@@ -80,7 +88,7 @@ mrs将系统寄存器move到通用寄存器。
 
 在终端中运行aarch64-linux-gnu-objdump -S build/kernel.img，结果如下图所示，进入init_c后的第一行代码为：
 
-![](./1-3.png)
+![](./assets/1-3.png)
 
 其中，x29是帧指针，x30是链接寄存器，在刚进入init_c时，这两个寄存器将会被压入栈中，以便结束后恢复并返回至原函数。如果没有设置启动栈，sp就是一个未知地址，可能带来错误。
 
@@ -90,13 +98,14 @@ mrs将系统寄存器move到通用寄存器。
 
 2. 保存局部变量；主要为函数的非静态局部变量，故如果不设置栈，可能会导致变量无法被正确访问或导致变量被篡改；
 
-3. 保存函数调用前后上下文；如果不设置可能会导致上下文丢失。
+3. 保存函数调用前后上下文；如果不设置可能会导致上下文丢失
 
-   
 
   由此可见，在进入C函数前设置启动栈是非常必要的。
 
 
+
+#### 思考题5
 
 ```
 思考题 5：在实验 1 中，其实不调用 `clear_bss` 也不影响内核的执行，请思考不清理 `.bss` 段在之后的何种情况下会导致内核无法工作。
@@ -107,6 +116,8 @@ mrs将系统寄存器move到通用寄存器。
 ​     所以，我觉得如果在这里不清理bss，那么加载时分配的bss段里面就是一些随机的数据。如果在之后使用这些变量时没有先进行赋值而是依然假设其已为0，那肯定会出现一些问题导致内核无法工作。至于为什么实验1中不影响内核的执行，我认为可能是没有使用bss段中的变量或是代码很严谨，每个这种变量使用前都进行了检查或者赋值。
 
 
+
+#### 练习题6
 
 ```
 练习题 6：在 `kernel/arch/aarch64/boot/raspi3/peripherals/uart.c` 中 `LAB 1 TODO 3` 处实现通过 UART 输出字符串的逻辑。
@@ -122,11 +133,13 @@ mrs将系统寄存器move到通用寄存器。
 
 填写代码后运行make qemu，得到如下结果：
 
-![](./1-4.png)
+![](./assets/1-4.png)
 
 这在写上面这段代码之前是没有的，说明这段代码成功输出了字符串。
 
 
+
+#### 练习题7
 
 ```
 练习题 7：在 `kernel/arch/aarch64/boot/raspi3/init/tools.S` 中 `LAB 1 TODO 4` 处填写一行汇编代码，以启用 MMU。
@@ -140,25 +153,25 @@ mrs将系统寄存器move到通用寄存器。
 
 老师上课的PPT中有这行代码，但老师上课时没有一行行代码的讲，我参考了[arm Developer](https://developer.arm.com/documentation/100403/0301/register-descriptions/aarch64-system-registers/sctlr-el1--system-control-register--el1?lang=en)中对SCTR_EL1的解释，结合Lab1 guide上面的提示，大概知道了：
 
-![](./1-5.png)
+![](./assets/1-5.png)
 
 我补上的第255行是设置M字段来启用MMU，第258~261行是启用对齐检查，第263~265行是启用指令和数据缓存，最后把设置好的结果移入sctlr_el1中从而启用MMU。
 
 按照Lab1 Guide上的检测方法，发现执行流确实会在0x200地址处无限跳转：
 
-![](./1-6.png)
+![](./assets/1-6.png)
 
-![](./1-7.png)
+![](./assets/1-7.png)
 
 
 
 最后make grade：
 
-![](./1-8.png)
+![](./assets/1-8.png)
 
 
 
-**参考**
+#### 参考
 
 [(74条消息) ARM 汇编指令_arm cbz_never_go_away的博客-CSDN博客](https://blog.csdn.net/never_go_away/article/details/126884707)
 
