@@ -86,7 +86,7 @@
 
   在设置boot_ttbr1_l0指向boot_ttbr1_l1，boot_ttbr1_l1指向boot_ttbr1_l2之后，用循环映射l2。与TTBR0的设置相比，只有虚拟地址的范围不同（即va = pa + KERNEL_VADDR），其它没有区别。
 
-![](.\assets\2-1.jpg)
+![](./assets/2-1.jpg)
 
 
 
@@ -96,9 +96,9 @@
 
 ​    **验证：**将init_boot_pt函数中为低地址配置页表的的代码给注释掉，运行GDB进行调试，结果如下所示：
 
-![](.\assets\2-2.png)
+![](./assets/2-2.png)
 
-![](.\assets\2-3.png)
+![](./assets/2-3.png)
 
 ​    程序在输出[BOOT]Install boot page table之后卡住，运行GDB发现报"Cannot access memory at address 0x200"说明MMU无法翻译低地址。
 
@@ -108,7 +108,7 @@
 
   在kernel/arch/aarch64/boot/raspi3/init/tools.S中，有这样一段代码来配置用户态页表基地址寄存器ttbr0_el1和内核态页表基地址寄存器ttbr1_el1：
 
-![2-4](.\assets\2-4.png)
+![2-4](./assets/2-4.png)
 
  其中,boot_ttbr0_l0和boot_ttbr1_l0是之前在`init_boot_pt` 函数中配置的高地址和低地址l0级页表的地址。代码的具体意义如下：
 
@@ -601,4 +601,4 @@ map_range_in_pgtbl(pgtbl, KBASE+_data_start, _data_start, len, flags);
 
 最后make grade：
 
-![2-5](.\assets\2-5.png)
+![2-5](./assets/2-5.png)
