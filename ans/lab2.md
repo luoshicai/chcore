@@ -126,7 +126,7 @@
 
   熟悉数据结构和提示中的功能函数后，就可以实现伙伴系统了：
 
-**1.split_page的实现： ** 我没有使用递归函数来实现，因为我觉得使用循环实现更简单直观。实现思路为，如果page->order>order，则page->order--，通过get_buddy_chunk找到分裂的另一半，将其插入对应的空闲链表中。重复上述步骤直到page->order==order。具体代码如下所示：
+**1.split_page的实现：** 我没有使用递归函数来实现，因为我觉得使用循环实现更简单直观。实现思路为，如果page->order>order，则page->order--，通过get_buddy_chunk找到分裂的另一半，将其插入对应的空闲链表中。重复上述步骤直到page->order==order。具体代码如下所示：
 
 ```
 static struct page *split_page(struct phys_mem_pool *pool, u64 order,
