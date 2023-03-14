@@ -94,7 +94,7 @@
 
 ​    在配置页表，打开MMU之前，CPU一直使用的是物理地址，即PC指针指向的是初始化代码的物理地址（低地址）。如果没有配置低地址页表，打开MMU后，操作系统会认为PC的地址是虚拟地址，但低地址区域又没有建立对应的映射，没法翻译，从而出错。所以就像上图所显示的内存布局一样，不仅为低地址配置页表，而且虚拟地址与物理地址一致，使得PC所指向的地址最终仍会映射到相同的物理地址上，这样在开启MMU前后程序均能正常运行。
 
-​    **验证：**将init_boot_pt函数中为低地址配置页表的的代码给注释掉，运行GDB进行调试，结果如下所示：
+​    **验证：** 将init_boot_pt函数中为低地址配置页表的的代码给注释掉，运行GDB进行调试，结果如下所示：
 
 ![](./assets/2-2.png)
 
@@ -126,7 +126,7 @@
 
   熟悉数据结构和提示中的功能函数后，就可以实现伙伴系统了：
 
-**1.split_page的实现：**我没有使用递归函数来实现，因为我觉得使用循环实现更简单直观。实现思路为，如果page->order>order，则page->order--，通过get_buddy_chunk找到分裂的另一半，将其插入对应的空闲链表中。重复上述步骤直到page->order==order。具体代码如下所示：
+**1.split_page的实现： ** 我没有使用递归函数来实现，因为我觉得使用循环实现更简单直观。实现思路为，如果page->order>order，则page->order--，通过get_buddy_chunk找到分裂的另一半，将其插入对应的空闲链表中。重复上述步骤直到page->order==order。具体代码如下所示：
 
 ```
 static struct page *split_page(struct phys_mem_pool *pool, u64 order,
@@ -156,7 +156,7 @@ static struct page *split_page(struct phys_mem_pool *pool, u64 order,
 }
 ```
 
-**2.buddy_get_pages的实现：**从order级别开始，从小到大遍历当前pool的freelists，找到大于等于需要分配的页的order的最小块，然后split_page拿到刚好为order大小的块返回。具体代码为：
+**2.buddy_get_pages的实现：** 从order级别开始，从小到大遍历当前pool的freelists，找到大于等于需要分配的页的order的最小块，然后split_page拿到刚好为order大小的块返回。具体代码为：
 
 ```
 struct page *buddy_get_pages(struct phys_mem_pool *pool, u64 order)
@@ -186,7 +186,7 @@ struct page *buddy_get_pages(struct phys_mem_pool *pool, u64 order)
 }
 ```
 
-**3.merge_page的实现：**同样采用一个循环来实现。实现思路为：在当前页的order不是最大的order的情况下，通过get_buddy_chunk函数找到他的伙伴块，如果他的伙伴块是空闲的，则将伙伴块从空闲链表中删除，与其合并成一个更大的块，块的地址为两个小块中小的那个。重复上述步骤直到伙伴块非空闲或合并成伙伴系统中最大的一整个块。具体代码为：
+**3.merge_page的实现：** 同样采用一个循环来实现。实现思路为：在当前页的order不是最大的order的情况下，通过get_buddy_chunk函数找到他的伙伴块，如果他的伙伴块是空闲的，则将伙伴块从空闲链表中删除，与其合并成一个更大的块，块的地址为两个小块中小的那个。重复上述步骤直到伙伴块非空闲或合并成伙伴系统中最大的一整个块。具体代码为：
 
 ```
 static struct page *merge_page(struct phys_mem_pool *pool, struct page *page)
@@ -216,7 +216,7 @@ static struct page *merge_page(struct phys_mem_pool *pool, struct page *page)
 }
 ```
 
-**4.budy_free_pages的实现：**调用一次merge_page，将不能再合并的块插入对应的空闲链表中。具体实现代码为：
+**4.budy_free_pages的实现：** 调用一次merge_page，将不能再合并的块插入对应的空闲链表中。具体实现代码为：
 
 ```
 void buddy_free_pages(struct phys_mem_pool *pool, struct page *page)
@@ -242,7 +242,7 @@ void buddy_free_pages(struct phys_mem_pool *pool, struct page *page)
 
   在数据结构方面要注意的是pte_t是一个64位的union，有table（L0,L1,L2页表项，主要存储了下一级页表的物理地址）、L1_block（L1页表项，指向1G大页）、L2_block（L2页表项，指向2MB大页）、L3_page（L3级页表项，指向4K的数据页)。多出来的那个u64 pte应该是为了方便初始化等整体操作。
 
-  **1.get_next_ptp的实现：**这一段待填写代码发生于在查找下一级页表时出现该页表尚未分配的情况。基本思路为申请一块新的物理页作为该页表，然后填写新分配页表所属上一级页表的对应页表项信息。
+  **1.get_next_ptp的实现：** 这一段待填写代码发生于在查找下一级页表时出现该页表尚未分配的情况。基本思路为申请一块新的物理页作为该页表，然后填写新分配页表所属上一级页表的对应页表项信息。
 
 ```
 new_ptp = get_pages(0);   // alloc 4K(order=0)
@@ -258,7 +258,7 @@ new_pte_val.table.next_table_addr = new_ptp_paddr >> PAGE_SHIFT;
 cur_ptp->ent[index] = new_pte_val;
 ```
 
-  **2.query_in_pgtbl的实现：**函数的功能是查找在pgtbl页表的映射下，虚拟地址va对应的物理地址pa，并将pa和对应的pte entry返回。基本思路为：通过get_next_ptp函数不断查找下一级页表，如果该函数返回BLOCK_PTP且level为1或2表明是大页映射，四次循环后函数尚未返回表明是常规4K数据页，以上两种情况按照页大小组成对应的物理地址后返回。如果该函数返回-ENOMAPPING表明该地址尚未映射，这里的策略是将-ENOMAPPING信息继续往上传递。
+  **2.query_in_pgtbl的实现：** 函数的功能是查找在pgtbl页表的映射下，虚拟地址va对应的物理地址pa，并将pa和对应的pte entry返回。基本思路为：通过get_next_ptp函数不断查找下一级页表，如果该函数返回BLOCK_PTP且level为1或2表明是大页映射，四次循环后函数尚未返回表明是常规4K数据页，以上两种情况按照页大小组成对应的物理地址后返回。如果该函数返回-ENOMAPPING表明该地址尚未映射，这里的策略是将-ENOMAPPING信息继续往上传递。
 
 ```
 int query_in_pgtbl(void *pgtbl, vaddr_t va, paddr_t *pa, pte_t **entry)
@@ -302,7 +302,7 @@ int query_in_pgtbl(void *pgtbl, vaddr_t va, paddr_t *pa, pte_t **entry)
 }
 ```
 
-  **3.map_range_in_pgtbl的实现:**此函数的功能是建立从虚拟地址va到物理地址pa长度为len的映射。实现的基本思路为：使用get_next_ptp(alloc=true)逐级查找/创建下级页表，在获得L3级页表后，在对应的页表项中填写物理地址信息建立映射，重复操作直到达到len长度为止。
+  **3.map_range_in_pgtbl的实现:** 此函数的功能是建立从虚拟地址va到物理地址pa长度为len的映射。实现的基本思路为：使用get_next_ptp(alloc=true)逐级查找/创建下级页表，在获得L3级页表后，在对应的页表项中填写物理地址信息建立映射，重复操作直到达到len长度为止。
 
 ```
 int map_range_in_pgtbl(void *pgtbl, vaddr_t va, paddr_t pa, size_t len,
@@ -350,7 +350,7 @@ int map_range_in_pgtbl(void *pgtbl, vaddr_t va, paddr_t pa, size_t len,
 }
 ```
 
-**4.unmap_range_in_pgtbl的实现：**此函数的功能是消除虚拟地址va对应的长度为len的映射。实现的基本思路与map相似，通过get_next_ptp(alloc=false)不断查找下一级页表，找到L3页表后将对应的页表项置0，重复上述操作直到长度为len。
+**4.unmap_range_in_pgtbl的实现：** 此函数的功能是消除虚拟地址va对应的长度为len的映射。实现的基本思路与map相似，通过get_next_ptp(alloc=false)不断查找下一级页表，找到L3页表后将对应的页表项置0，重复上述操作直到长度为len。
 
   在实现时我对一些细节很犹豫。比如，如果get_next_ptp返回-ENOMAPPING，怎么处理比较好，最后我感觉这种调用应该是错误的，如果将这个page table当作已经unmap了继续处理感觉也不合适，仔细阅读文档发现它说映射和取消映射是以4K为粒度，那这种情况就更不应该出现，我只是简单的返回-ENOMAPPING将错误信息上传，这样从结果上看那4k页确实unmap了上层也可以获得错误信息。
 
@@ -397,7 +397,7 @@ int unmap_range_in_pgtbl(void *pgtbl, vaddr_t va, size_t len) {
 
 #### 练习题 7：完成 `kernel/arch/aarch64/mm/page_table.c` 中的 `map_range_in_pgtbl_huge` 和 `unmap_range_in_pgtbl_huge` 函数中的 `LAB 2 TODO 4` 部分，实现大页（2MB、1GB 页）支持。
 
- **1. map_range_in_pgtbl_huge的实现：**此函数的功能是建立从虚拟地址va到物理地址pa长度为len的映射，但在len的长度可以分配大页时，优先分配大页。实现的基本思路就是：如果len大于1G，则不断使用1G的大页建立映射直到len小于1G；如果len小于1G但大于2MB，则不断使用2MB的大页建立映射直到len小于2MB；如果len小于2MB则不断使用4KB的页建立映射直到完整映射了len长度。每次映射后应调整va，pa和len的大小。
+ **1. map_range_in_pgtbl_huge的实现：** 此函数的功能是建立从虚拟地址va到物理地址pa长度为len的映射，但在len的长度可以分配大页时，优先分配大页。实现的基本思路就是：如果len大于1G，则不断使用1G的大页建立映射直到len小于1G；如果len小于1G但大于2MB，则不断使用2MB的大页建立映射直到len小于2MB；如果len小于2MB则不断使用4KB的页建立映射直到完整映射了len长度。每次映射后应调整va，pa和len的大小。
 
 ```
 int map_range_in_pgtbl_huge(void *pgtbl, vaddr_t va, paddr_t pa, size_t len,
@@ -490,7 +490,7 @@ int map_range_in_pgtbl_huge(void *pgtbl, vaddr_t va, paddr_t pa, size_t len,
 }
 ```
 
-**2. unmap_range_in_pgtbl_huge的实现：**此函数的功能是消除虚拟地址va对应的长度为len的映射。实现的基本思路与unmap_huge相似，用get_next_ptp一级一级向下查找，在L1和L2级时，如果发现返回的是数据页(BLOCK_PTP)则消除大页映射，最后将普通映射的部分也unmap。为了后续unmap的正确进行，每次取消映射后应在调整va和len的大小后再继续循环。
+**2. unmap_range_in_pgtbl_huge的实现：** 此函数的功能是消除虚拟地址va对应的长度为len的映射。实现的基本思路与unmap_huge相似，用get_next_ptp一级一级向下查找，在L1和L2级时，如果发现返回的是数据页(BLOCK_PTP)则消除大页映射，最后将普通映射的部分也unmap。为了后续unmap的正确进行，每次取消映射后应在调整va和len的大小后再继续循环。
 
 ```
 int unmap_range_in_pgtbl_huge(void *pgtbl, vaddr_t va, size_t len)
