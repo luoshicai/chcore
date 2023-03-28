@@ -25,9 +25,9 @@
    e.调用start_kernel跳转到高地址，进而跳转到内核的main函数；
 
   二. 从内核进入用户态程序
- 
+   
      在main函数中：
- 
+     
  1. 调用uart_init来初始化uart；
  
  2. 调用mm_init初始化内存管理模块；
