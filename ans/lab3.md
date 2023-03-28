@@ -30,12 +30,12 @@
 
 ​     在main函数中：
 
-         1. 调用uart_init来初始化uart；
-            2. 调用mm_init初始化内存管理模块；
-            3. 调用arch_interrupt_init来初始化异常向量表；
-            4. 调用create_root_thread来创建root_thread,即第一个用户线程；
-            5. 调用switch_context将vmspace切换为该用户态线程的vmspace；
-            6. 调用eret_to_thread将控制权转交到该线程。
+ 1. 调用uart_init来初始化uart；
+ 2. 调用mm_init初始化内存管理模块；
+ 3. 调用arch_interrupt_init来初始化异常向量表；
+ 4. 调用create_root_thread来创建root_thread,即第一个用户线程；
+ 5. 调用switch_context将vmspace切换为该用户态线程的vmspace；
+ 6. 调用eret_to_thread将控制权转交到该线程。
 
 通过上面的步骤，完成了内核从完成必要的初始化到用户态程序的过程。
 
@@ -91,11 +91,11 @@ slot_id = cap_alloc(cap_group, cap_group, 0);
 
    然后遍历ELF文件中的每个段，对于每个PT_LOAD类型的段，进行一下操作：
 
-      1. 计算对齐后的段大小seg_map_sz；
-      2. 调用create_pmo()，该函数创建一个新的内存对象(PMO)，并将其与cap_group绑定使其可以被访问，最后返回cap以及通过二级指针返回PMO。段的数据就保存在这个PMO中，所以段大小seg_map_sz作为参数传入并使用PMO_DATA表明该PMO是存数据的；
-      3. 随后就是ELF加载操作，为此，首先使用memset初始化空间为0，然后使用memcpy将ELF文件中当前段的内容复制到PMO虚拟地址空间里;
-      4. 调用PFLAGS2VMRFLAGS()，根据段的属性设置VMR的flag；
-      5. 调用vmspace_map_range()将PMO映射到进程的虚拟地址空间中。
+  1. 计算对齐后的段大小seg_map_sz；
+  2. 调用create_pmo()，该函数创建一个新的内存对象(PMO)，并将其与cap_group绑定使其可以被访问，最后返回cap以及通过二级指针返回PMO。段的数据就保存在这个PMO中，所以段大小seg_map_sz作为参数传入并使用PMO_DATA表明该PMO是存数据的；
+  3. 随后就是ELF加载操作，为此，首先使用memset初始化空间为0，然后使用memcpy将ELF文件中当前段的内容复制到PMO虚拟地址空间里;
+  4. 调用PFLAGS2VMRFLAGS()，根据段的属性设置VMR的flag；
+  5. 调用vmspace_map_range()将PMO映射到进程的虚拟地址空间中。
 
   实现代码如下所示：
 
