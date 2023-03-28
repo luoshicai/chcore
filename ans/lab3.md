@@ -10,21 +10,21 @@
 
    一. 内核启动
 
-   1. 启动CPU0号核：_start函数是ChCore内核启动的第一块代码。ChCore中，会让0号核进入初始化流程，而其它核在支持SMP之前都被hang住；
+1. 启动CPU0号核：_start函数是ChCore内核启动的第一块代码。ChCore中，会让0号核进入初始化流程，而其它核在支持SMP之前都被hang住；
 
    2. 切换异常级别：通过调用arm64_elX_to_el1切换异常级别为EL1;
 
    3. 跳转执行第一块C代码：init_c是第一块C代码，在这个函数中：
 
-        a.调用clear_bss来清除kernel image的.bss段；
+      a.调用clear_bss来清除kernel image的.bss段；
 
-        b.调用early_uart_init初始化uart;
+      b.调用early_uart_init初始化uart;
 
-        c.调用init_boot_pt配置内核启动页表；
+      c.调用init_boot_pt配置内核启动页表；
 
-        d.调用el1_mmu_activate启用MMU;
+      d.调用el1_mmu_activate启用MMU;
 
-        e.调用start_kernel跳转到高地址，进而跳转到内核的main函数；
+      e.调用start_kernel跳转到高地址，进而跳转到内核的main函数；
 
    二. 从内核进入用户态程序
 
