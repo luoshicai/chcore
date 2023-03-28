@@ -15,19 +15,27 @@
 3. 跳转执行第一块C代码：init_c是第一块C代码，在这个函数中：
 
    a.调用clear_bss来清除kernel image的.bss段；
+
    b.调用early_uart_init初始化uart;
+
    c.调用init_boot_pt配置内核启动页表；
+
    d.调用el1_mmu_activate启用MMU;
+
    e.调用start_kernel跳转到高地址，进而跳转到内核的main函数；
 
   二. 从内核进入用户态程序
-
 ​     在main函数中：
  1. 调用uart_init来初始化uart；
+ 
  2. 调用mm_init初始化内存管理模块；
+ 
  3. 调用arch_interrupt_init来初始化异常向量表；
+ 
  4. 调用create_root_thread来创建root_thread,即第一个用户线程；
+ 
  5. 调用switch_context将vmspace切换为该用户态线程的vmspace；
+ 
  6. 调用eret_to_thread将控制权转交到该线程。
 
 通过上面的步骤，完成了内核从完成必要的初始化到用户态程序的过程。
