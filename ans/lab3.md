@@ -28,19 +28,14 @@
 
    二. 从内核进入用户态程序
 
-​    在main函数中：
+​     在main函数中：
 
-​      1.调用uart_init来初始化uart；
-
-​      2.调用mm_init初始化内存管理模块；
-
-​      3.调用arch_interrupt_init来初始化异常向量表；
-
-​      4.调用create_root_thread来创建root_thread,即第一个用户线程；
-
-​      5.调用switch_context将vmspace切换为该用户态线程的vmspace；
-
-​      6.调用eret_to_thread将控制权转交到该线程。
+         1. 调用uart_init来初始化uart；
+            2. 调用mm_init初始化内存管理模块；
+            3. 调用arch_interrupt_init来初始化异常向量表；
+            4. 调用create_root_thread来创建root_thread,即第一个用户线程；
+            5. 调用switch_context将vmspace切换为该用户态线程的vmspace；
+            6. 调用eret_to_thread将控制权转交到该线程。
 
 通过上面的步骤，完成了内核从完成必要的初始化到用户态程序的过程。
 
@@ -66,11 +61,11 @@ int cap_group_init(struct cap_group *cap_group, unsigned int size, u64 pid)
 
    **2. sys_create_cap_group与create_root_cap_group的实现：** 
 
-  比较难以理解的是cap_alloc这个操作。在ChCore中，所有的内核资源均被抽象成了内核对象，cap_group作为进程的抽象，有一个slot_table的成员，表示该进程有权访问的内核对象的数组，内核对象在该数组中的索引即为该对象的cap。
+   比较难以理解的是cap_alloc这个操作。在ChCore中，所有的内核资源均被抽象成了内核对象，cap_group作为进程的抽象，有一个slot_table的成员，表示该进程有权访问的内核对象的数组，内核对象在该数组中的索引即为该对象的cap。
 
-  cap_alloc(struct cap_group *cap_group, void *obj, u64 rights)的功能为：给cap_group分配一个空闲槽位，并将该槽位与obj建立联系，这样cap_group就可以合法的访问obj了。(似乎cap和slot_id是一个意思)。
+   cap_alloc(struct cap_group *cap_group, void *obj, u64 rights)的功能为：给cap_group分配一个空闲槽位，并将该槽位与obj建立联系，这样cap_group就可以合法的访问obj了。(似乎cap和slot_id是一个意思)。
 
-  需要注意的是，进程本身也是这样一个内核对象。所以在sys_create_cap_group函数中，有这样一段代码，表示让父进程可以合法的访问子进程：
+   需要注意的是，进程本身也是这样一个内核对象。所以在sys_create_cap_group函数中，有这样一段代码，表示让父进程可以合法的访问子进程：
 
 ```
 cap = cap_alloc(current_cap_group, new_cap_group, 0);
@@ -90,19 +85,17 @@ slot_id = cap_alloc(cap_group, cap_group, 0);
 
 #### 练习题 3: 在 `kernel/object/thread.c` 中完成 `load_binary` 函数，将用户程序 ELF 加载到刚刚创建的进程地址空间中。
 
-  正如题目中所说，load_binary函数的功能是将用户程序ELF加载到刚刚创建的进程地址空间中。函数逻辑不算复杂，难点在于理解数据结构和功能函数，具体实现为：
+   正如题目中所说，load_binary函数的功能是将用户程序ELF加载到刚刚创建的进程地址空间中。函数逻辑不算复杂，难点在于理解数据结构和功能函数，具体实现为：
 
-  在给出的代码中，使用了elf_parse_file()函数解析ELF文件，得到了elf_file结构体；使用kmalloc分配pmo_cap数组，用于存储每个段对应的PMO的cap。
+   在给出的代码中，使用了elf_parse_file()函数解析ELF文件，得到了elf_file结构体；使用kmalloc分配pmo_cap数组，用于存储每个段对应的PMO的cap。
 
-  然后遍历ELF文件中的每个段，对于每个PT_LOAD类型的段，进行一下操作：
+   然后遍历ELF文件中的每个段，对于每个PT_LOAD类型的段，进行一下操作：
 
-       1. 计算对齐后的段大小seg_map_sz；
-          2. 调用create_pmo()，该函数创建一个新的内存对象(PMO)，并将其与cap_group绑定使其可以被访问，最后返回cap以及通过二级指针返回PMO。段的数据就保存在这个PMO中，所以段大小seg_map_sz作为参数传入并使用PMO_DATA表明该PMO是存数据的；
-          3. 随后就是ELF加载操作，为此，首先使用memset初始化空间为0，然后使用memcpy将ELF文件中当前段的内容复制到PMO虚拟地址空间里;
-
-   4.调用PFLAGS2VMRFLAGS()，根据段的属性设置VMR的flag；
-
-   5.调用vmspace_map_range()将PMO映射到进程的虚拟地址空间中。
+      1. 计算对齐后的段大小seg_map_sz；
+      2. 调用create_pmo()，该函数创建一个新的内存对象(PMO)，并将其与cap_group绑定使其可以被访问，最后返回cap以及通过二级指针返回PMO。段的数据就保存在这个PMO中，所以段大小seg_map_sz作为参数传入并使用PMO_DATA表明该PMO是存数据的；
+      3. 随后就是ELF加载操作，为此，首先使用memset初始化空间为0，然后使用memcpy将ELF文件中当前段的内容复制到PMO虚拟地址空间里;
+      4. 调用PFLAGS2VMRFLAGS()，根据段的属性设置VMR的flag；
+      5. 调用vmspace_map_range()将PMO映射到进程的虚拟地址空间中。
 
   实现代码如下所示：
 
@@ -185,9 +178,9 @@ map_range_in_pgtbl(vmspace->pgtbl, fault_addr, pa, PAGE_SIZE, perm);
 
   在irq_entry.S中，具体汇编代码如下所示：
 
-![](.\assets\3-1.png)
+![](./assets/3-1.png)
 
-![](.\assets\3-2.png)
+![](./assets/3-2.png)
 
   具体来说，在ChCore中，当用户程序执行系统调用('svc'指令)时，会引发一个'sync_el0_64'的异常，进而将控制权转移到irq_entry.S中与上面图片中的代码所匹配。'sync_el0_64'对应的异常处理中，首先会检查是不是所支持的系统调用类型，如果是则跳转到'el0_syscall'处，通过'syscall_table'数组和系统调用参数查找到对应系统调用函数的地址，然后跳转过去，从而完成从异常向量分派到系统调用表中对应条目的过程。
 
@@ -377,4 +370,4 @@ void alloc_abstract_page(void *pgtbl, vaddr_t va, paddr_t pa, vm_prop_t perm) {
 
 最后`make grade`:
 
-![](.\assets\3-3.png)
+![](./assets/3-3.png)
