@@ -334,8 +334,8 @@ int rr_sched(void) {
 
   因为在`handle_irq`中，其会调用`eret_to_thread`，而`__eret_to_thread`在返回前会`unlock_kernel`。所以，如果空闲线程捕获错误时不获取大内核锁，则锁被lock的次数就少于其被unlock的次数，从而导致一些问题：
 
-    1. 如果CPU0上运行空闲线程发生错误时，CPU1此时持有大内核锁正处理一些东西，CPU2在等待大内核锁。则CPU0空闲线程多释放一次锁会使CPU2拿到大内核锁，出现两个线程同时操作内核数据结构的情况，可能导致很多问题；
-    2. 继续上面的情况分析死锁，假设初始时ticket->owner和ticket->next均为0。则结束时拿了两次锁放了3次锁，ticket->owner=3，ticket->next=2。此时再有一个线程拿锁时，`fetch_and_add`会返回2，但ticket->owner已为3，所以该线程永远也拿不到锁，出现死锁的状况。
+1. 如果CPU0上运行空闲线程发生错误时，CPU1此时持有大内核锁正处理一些东西，CPU2在等待大内核锁。则CPU0空闲线程多释放一次锁会使CPU2拿到大内核锁，出现两个线程同时操作内核数据结构的情况，可能导致很多问题；
+2. 继续上面的情况分析死锁，假设初始时ticket->owner和ticket->next均为0。则结束时拿了两次锁放了3次锁，ticket->owner=3，ticket->next=2。此时再有一个线程拿锁时，`fetch_and_add`会返回2，但ticket->owner已为3，所以该线程永远也拿不到锁，出现死锁的状况。
 
 在unlock前检查锁是否正被持有，可以避免死锁的出现：
 
@@ -612,4 +612,6 @@ void unlock(struct lock *lock) {
 
 
 
+最后评分：
 
+![](./assets/4-1.png)
