@@ -63,7 +63,6 @@ int main(int argc, char *argv[], char *envp[])
         filled_slot = 0;
         empty_slot = __chcore_sys_create_sem();
         filled_slot = __chcore_sys_create_sem();
-
         printf("Begin Producer/Consumer Test!\n");
         for (i = 0; i < BUF_SIZE; i++) {
                 __chcore_sys_signal_sem(empty_slot);
@@ -74,7 +73,7 @@ int main(int argc, char *argv[], char *envp[])
                         chcore_thread_create(producer, i + 1, PRIO, TYPE_USER);
                 /* set affinity */
                 __chcore_sys_set_affinity(thread_cap, i % PLAT_CPU_NUM);
-        }
+        }        
         for (i = 0; i < CONS_THD_CNT; i++) {
                 thread_cap =
                         chcore_thread_create(consumer, i + 1, PRIO, TYPE_USER);

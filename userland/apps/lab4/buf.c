@@ -11,6 +11,7 @@
  */
 
 #include <sync/spin.h>
+#include <stdio.h>
 #include "buf.h"
 
 volatile int buffer_write_cnt = 0;
@@ -26,6 +27,7 @@ void buffer_init(void)
 void buffer_add_safe(int msg)
 {
         spinlock_lock(&buffer_lock);
+        //printf("add:buffer_write_cnt=%d\n", buffer_write_cnt);
         buffer[buffer_write_cnt] = msg;
         buffer_write_cnt = (buffer_write_cnt + 1) % BUF_SIZE;
         spinlock_unlock(&buffer_lock);
@@ -34,6 +36,7 @@ void buffer_add_safe(int msg)
 int buffer_remove_safe(void)
 {
         spinlock_lock(&buffer_lock);
+        //printf("remove:buffer_read_cnt=%d\n", buffer_read_cnt);
         int ret = buffer[buffer_read_cnt];
         buffer_read_cnt = (buffer_read_cnt + 1) % BUF_SIZE;
         spinlock_unlock(&buffer_lock);
