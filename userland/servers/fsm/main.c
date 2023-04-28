@@ -92,7 +92,9 @@ void fsm_server_dispatch(struct ipc_msg *ipc_msg, u64 client_badge)
 
 	/* You could add code here as you want.*/
 	/* LAB 5 TODO BEGIN */
-
+    struct ipc_msg *redirect_ipc_msg = NULL;
+	struct fs_request *redirect_fr = NULL;
+	int fs_request_len = sizeof(struct fs_request);
 	/* LAB 5 TODO END */
 
 	spinlock_lock(&fsmlock);
@@ -113,7 +115,87 @@ void fsm_server_dispatch(struct ipc_msg *ipc_msg, u64 client_badge)
 			break;
 
 		/* LAB 5 TODO BEGIN */
+		case FS_REQ_OPEN:
+            mpinfo = get_mount_point(fr->open.pathname, strlen(fr->open.pathname));
+			strip_path(mpinfo, fr->open.pathname);
+            fsm_set_mount_info_withfd(client_badge, fr->open.new_fd, mpinfo);
+            redirect_ipc_msg = ipc_create_msg(mpinfo->_fs_ipc_struct, fs_request_len, 0);
+			redirect_fr = (struct fs_request*)ipc_get_msg_data(redirect_ipc_msg);
+			
+			redirect_fr->req = FS_REQ_OPEN;
+			redirect_fr->open.new_fd = fr->open.new_fd;
+			redirect_fr->open.fid = fr->open.fid;
+			redirect_fr->open.flags = fr->open.flags;
+			redirect_fr->open.mode = fr->open.mode;	
+			strcpy(redirect_fr->open.pathname, fr->open.pathname);
 
+            ret = ipc_call(mpinfo->_fs_ipc_struct, redirect_ipc_msg);
+			ipc_destroy_msg(mpinfo->_fs_ipc_struct, redirect_ipc_msg);
+			break;				    
+		case FS_REQ_READ:
+            mpinfo = fsm_get_mount_info_withfd(client_badge, fr->read.fd);
+            redirect_ipc_msg = ipc_create_msg(mpinfo->_fs_ipc_struct, fs_request_len + fr->read.count + 2, 0);
+			redirect_fr = (struct fs_request*)ipc_get_msg_data(redirect_ipc_msg);			
+
+			redirect_fr->req = FS_REQ_READ;
+			redirect_fr->read.count = fr->read.count;
+			redirect_fr->read.fd = fr->read.fd;
+
+            ret = ipc_call(mpinfo->_fs_ipc_struct, redirect_ipc_msg);
+			memcpy(ipc_get_msg_data(ipc_msg), ipc_get_msg_data(redirect_ipc_msg), ret);
+			ipc_destroy_msg(mpinfo->_fs_ipc_struct, redirect_ipc_msg);		    
+		    break;
+		case FS_REQ_CLOSE:
+            mpinfo = fsm_get_mount_info_withfd(client_badge, fr->close.fd);
+            redirect_ipc_msg = ipc_create_msg(mpinfo->_fs_ipc_struct, fs_request_len, 0);
+			redirect_fr = (struct fs_request*)ipc_get_msg_data(redirect_ipc_msg);			
+
+			redirect_fr->req = FS_REQ_CLOSE;
+			redirect_fr->close.fd = fr->close.fd;
+
+            ret = ipc_call(mpinfo->_fs_ipc_struct, redirect_ipc_msg);
+			ipc_destroy_msg(mpinfo->_fs_ipc_struct, redirect_ipc_msg);		    
+		    break;	
+		case FS_REQ_GETDENTS64:
+		    mpinfo = fsm_get_mount_info_withfd(client_badge, fr->getdents64.fd);
+			redirect_ipc_msg = ipc_create_msg(mpinfo->_fs_ipc_struct, 512, 0);
+            redirect_fr = (struct fs_request*)ipc_get_msg_data(redirect_ipc_msg);			
+
+			redirect_fr->req = FS_REQ_GETDENTS64;
+			redirect_fr->getdents64.fd = fr->getdents64.fd;
+			redirect_fr->getdents64.count = fr->getdents64.count;    	    
+		
+		    ret = ipc_call(mpinfo->_fs_ipc_struct, redirect_ipc_msg);
+			memcpy(ipc_get_msg_data(ipc_msg),ipc_get_msg_data(redirect_ipc_msg), ret);
+			ipc_destroy_msg(mpinfo->_fs_ipc_struct,redirect_ipc_msg);
+			break;
+		case FS_REQ_CREAT:
+		    mpinfo = get_mount_point(fr->creat.pathname, strlen(fr->creat.pathname));
+			strip_path(mpinfo, fr->open.pathname);
+			redirect_ipc_msg = ipc_create_msg(mpinfo->_fs_ipc_struct, fs_request_len, 0);
+			redirect_fr = (struct fs_request*)ipc_get_msg_data(redirect_ipc_msg);
+
+			redirect_fr->req = FS_REQ_CREAT;
+			redirect_fr->creat.mode = fr->creat.mode;
+			strcpy(redirect_fr->creat.pathname, fr->creat.pathname);
+
+			ret = ipc_call(mpinfo->_fs_ipc_struct, redirect_ipc_msg);
+			ipc_destroy_msg(mpinfo->_fs_ipc_struct, redirect_ipc_msg);
+			break;
+		case FS_REQ_WRITE:
+		    mpinfo = fsm_get_mount_info_withfd(client_badge, fr->write.fd);
+            redirect_ipc_msg = ipc_create_msg(mpinfo->_fs_ipc_struct, fs_request_len + fr->write.count + 2, 0);
+			redirect_fr = (struct fs_request*)ipc_get_msg_data(redirect_ipc_msg);						
+
+			redirect_fr->req = FS_REQ_WRITE;
+			redirect_fr->write.count = fr->write.count;
+			redirect_fr->write.fd = fr->write.fd;
+			redirect_fr->write.write_buff_begin = fr->write.write_buff_begin;
+			memcpy((void*)redirect_fr+fs_request_len, (void*)fr+fs_request_len, fr->write.count);
+		    
+			ret = ipc_call(mpinfo->_fs_ipc_struct, redirect_ipc_msg);
+			ipc_destroy_msg(mpinfo->_fs_ipc_struct, redirect_ipc_msg);
+			break;
 		/* LAB 5 TODO END */
 
 		default:

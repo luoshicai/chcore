@@ -22,9 +22,8 @@ char getch()
 {
 	int c;
 	/* LAB 5 TODO BEGIN */
-
+    c = chcore_console_getc();
 	/* LAB 5 TODO END */
-
 	return (char) c;
 }
 

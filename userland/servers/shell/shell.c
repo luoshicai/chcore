@@ -34,6 +34,55 @@ int fs_server_cap;
 
 struct ipc_struct *fs_ipc_struct = NULL;
 
+int open_file(const char *path, int fd) {
+    struct ipc_msg *ipc_msg = ipc_create_msg(
+        fs_ipc_struct, sizeof(struct fs_request), 0);
+    chcore_assert(ipc_msg);
+    struct fs_request *fr = (struct fs_request *)ipc_get_msg_data(ipc_msg);
+    fr->req = FS_REQ_OPEN;
+    strcpy(fr->open.pathname, path);
+    fr->open.flags = O_RDONLY;
+    fr->open.new_fd = fd;
+    int ret = ipc_call(fs_ipc_struct, ipc_msg);
+    ipc_destroy_msg(fs_ipc_struct, ipc_msg);
+    return ret;
+}
+
+int close_file(int fd) {
+    struct ipc_msg *ipc_msg = ipc_create_msg(
+        fs_ipc_struct, sizeof(struct fs_request), 0);
+    chcore_assert(ipc_msg);
+    struct fs_request *fr = (struct fs_request *)ipc_get_msg_data(ipc_msg);
+    fr->req = FS_REQ_CLOSE;
+    fr->close.fd = fd;
+    int ret = ipc_call(fs_ipc_struct, ipc_msg);
+    ipc_destroy_msg(fs_ipc_struct, ipc_msg);
+    return ret;
+}
+
+int read_whole_file(int fd, char *buf) {
+    int cnt = 256;
+    int ret = 0;
+    int p = 0;
+    do {
+        struct ipc_msg *ipc_msg =
+            ipc_create_msg(fs_ipc_struct,
+                sizeof(struct fs_request) + cnt + 2, 0);
+            chcore_assert(ipc_msg);
+            struct fs_request *fr =
+                (struct fs_request *)ipc_get_msg_data(ipc_msg);
+            fr->req = FS_REQ_READ;
+            fr->read.fd = fd;
+            fr->read.count = cnt;
+            ret = ipc_call(fs_ipc_struct, ipc_msg);
+            if (ret > 0) {
+                memcpy(buf + p, ipc_get_msg_data(ipc_msg), ret);
+                    p += ret;
+            }
+            ipc_destroy_msg(fs_ipc_struct, ipc_msg);
+    } while (ret > 0);
+        return p;
+}
 
 static void connect_tmpfs_server(void)
 {
@@ -124,8 +173,7 @@ int alloc_fd()
 	return ++cnt;
 }
 
-int do_complement(char *buf, char *complement, int complement_time)
-{
+int do_complement(char *buf, char *complement, int complement_time) {
 	int ret = 0, j = 0;
 	struct dirent *p;
 	char name[BUFLEN];
@@ -134,7 +182,22 @@ int do_complement(char *buf, char *complement, int complement_time)
 	int offset;
 
 	/* LAB 5 TODO BEGIN */
-
+	int fd = alloc_fd();
+    open_file("/", fd);
+	
+	ret = getdents(fd, scan_buf, BUFLEN);
+	for (offset = 0; offset < ret; offset += p->d_reclen, j++) {
+		p = (struct dirent *)(scan_buf + offset);
+		get_dent_name(p, name);
+		if(name[0] == '.'){
+				j--;
+				continue;
+		}
+		if(j == complement_time){
+			strcpy(complement, name);
+			return 0;
+		}
+	}
 	/* LAB 5 TODO END */
 
 	return r;
@@ -146,8 +209,10 @@ extern char getch();
 // read a command from stdin leading by `prompt`
 // put the commond in `buf` and return `buf`
 // What you typed should be displayed on the screen
-char *readline(const char *prompt)
-{
+// read a command from stdin leading by `prompt`
+// put the commond in `buf` and return `buf`
+// What you typed should be displayed on the screen
+char *readline(const char *prompt) {
 	static char buf[BUFLEN];
 
 	int i = 0, j = 0;
@@ -161,15 +226,29 @@ char *readline(const char *prompt)
 	}
 
 	while (1) {
-    __chcore_sys_yield();
+    	__chcore_sys_yield();
 		c = getch();
 
 	/* LAB 5 TODO BEGIN */
 	/* Fill buf and handle tabs with do_complement(). */
-
+		if (c != '\t')
+			complement_time = 0;
+		if(c == '\n' || c == '\r'){
+			chcore_console_putc('\n');
+			break;
+		}
+		else if(c == '\t'){
+			if (do_complement(buf, complement, complement_time) == 0) {
+				complement_time++;
+				printf("%s\n", complement);
+			};
+			continue;			
+		}	
+    	buf[i] = c;
+		i++;
+		chcore_console_putc(c);
 	/* LAB 5 TODO END */
 	}
-
 	return buf;
 }
 
@@ -183,17 +262,41 @@ void print_file_content(char* path)
 {
 
 	/* LAB 5 TODO BEGIN */
+    if (!fs_ipc_struct) {
+        connect_tmpfs_server();
+    }
+	int file_fd = alloc_fd();
+	int ret = open_file(path, file_fd);
+
+	char buf[BUFLEN];
+    memset(buf, 0, BUFLEN);
+	ret = read_whole_file(file_fd, buf);
+    printf("%s", buf);
+    ret = close_file(file_fd);
 
 	/* LAB 5 TODO END */
-
 }
 
 
 void fs_scan(char *path)
 {
-
 	/* LAB 5 TODO BEGIN */
+    char name[BUFLEN];
+	char scan_buf[BUFLEN];
+	int offset;
+	struct dirent *p;
+    int ret;
+	int fd = alloc_fd();
 
+	ret = open_file(path, fd);
+    
+	ret = getdents(fd, scan_buf, BUFLEN);
+	for (offset = 0; offset < ret; offset += p->d_reclen) {
+			p = (struct dirent *)(scan_buf + offset);
+			get_dent_name(p, name);
+			if(name[0]!='.')
+				printf("%s ", name);
+	}
 	/* LAB 5 TODO END */
 }
 
@@ -226,7 +329,11 @@ int do_cat(char *cmdline)
 int do_echo(char *cmdline)
 {
 	/* LAB 5 TODO BEGIN */
-
+	cmdline += 4;
+	while(cmdline && *cmdline == ' '){
+		cmdline++;
+	}
+	printf("%s\n", cmdline);
 	/* LAB 5 TODO END */
 	return 0;
 }
@@ -278,7 +385,19 @@ int run_cmd(char *cmdline)
 	int cap = 0;
 	/* Hint: Function chcore_procm_spawn() could be used here. */
 	/* LAB 5 TODO BEGIN */
+	char pathbuf[BUFLEN] = {0};
+	int ret;
+	while (*cmdline == ' ')
+		cmdline++;
+	if (*cmdline == '\0') return -1;
+	else if (*cmdline != '/') strcpy(pathbuf, "/");
+	strcat(pathbuf, cmdline);
 
+	ret = chcore_procm_spawn(pathbuf, &cap);
+	if (ret < 0) {
+		printf("[Shell] No such binary\n");
+		return ret;
+	};
 	/* LAB 5 TODO END */
 	return 0;
 }
