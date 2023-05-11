@@ -11,7 +11,9 @@
  */
 
 typedef struct FILE {
-	/* LAB 5 TODO BEGIN */
-
-	/* LAB 5 TODO END */
+    /* LAB 5 TODO BEGIN */
+    int fd;
+    int mode;
+    unsigned long long offset;
+    /* LAB 5 TODO END */
 } FILE;
