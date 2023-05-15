@@ -6,6 +6,8 @@
 #include <chcore/capability.h>
 #include <chcore/assert.h>
 #include "emmc.h"
+#include <chcore/fs/defs.h>
+
 
 int map_mmio(unsigned long long pa_base, unsigned long long size){
 	int mmio_pmo, ret;
@@ -28,26 +30,36 @@ static int sdcard_readblock(int lba, char *buffer)
 {
 	/* LAB 6 TODO BEGIN */
 	/* BLANK BEGIN */
-
+	//printf("begin sdcard_readblock\n"); 
+	//printf("lba: %d\n", lba);
+	u64 offset = (u64)lba * BLOCK_SIZE;
+    Seek(offset);
+	int ret = sd_Read(buffer, BLOCK_SIZE);
 	/* BLANK END */
 	/* LAB 6 TODO END */
-	return -1;
+	return ret;
 }
 
 static int sdcard_writeblock(int lba, const char *buffer)
 {
 	/* LAB 6 TODO BEGIN */
 	/* BLANK BEGIN */
-
+	//printf("begin sdcard_writeblock\n"); 
+	//printf("lba: %d\n", lba); 
+	u64 offset = (u64)lba * BLOCK_SIZE;
+    Seek(offset);
+	int ret = sd_Write(buffer, BLOCK_SIZE);
 	/* BLANK END */
 	/* LAB 6 TODO END */
-	return -1;
+	return ret;
 }
 
 void sd_dispatch(ipc_msg_t * ipc_msg, u64 client_badge)
 {
 	struct sd_ipc_data *msg;
 	int ret = 0;
+
+    //printf("begin sd_dispatch\n");  
 
 	msg = (struct sd_ipc_data *)ipc_get_msg_data(ipc_msg);
 	switch (msg->request) {
@@ -72,7 +84,8 @@ int main(void)
 	while (!Initialize()) ;
 
 	ret = ipc_register_server(sd_dispatch);
-	printf("[SD Driver] register server value = %d\n", ret);
+	
+	printf("[SD Driver] register server value = %d\n", ret);  
 
 	while(1) {
 		__chcore_sys_yield();
