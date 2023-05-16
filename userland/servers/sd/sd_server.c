@@ -86,6 +86,7 @@ int main(void)
 	ret = ipc_register_server(sd_dispatch);
 	
 	printf("[SD Driver] register server value = %d\n", ret);  
+    // printf("inner_sd_io_test pass!\n");
 
 	while(1) {
 		__chcore_sys_yield();

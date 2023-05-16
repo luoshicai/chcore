@@ -23,7 +23,7 @@ void chcore_connect_sd_server()
     if (!procm_ipc_struct) {
         connect_procm_server();
     }
-    if (!sd_ipc_struct) {
+     if (!sd_ipc_struct) {
         struct ipc_msg *ipc_msg = ipc_create_msg(
                 procm_ipc_struct, sizeof(struct procm_ipc_data), 0);
         chcore_assert(ipc_msg);
