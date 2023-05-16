@@ -1394,7 +1394,7 @@ int CardInit(void)
 
 		return -1;
 	}
-    printf ("CardInit1\n");
+    //printf ("CardInit1\n");
 	// Read the controller version
 	u32 ver = read32(EMMC_SLOTISR_VER);
 	u32 sdversion = (ver >> 16) & 0xff;
@@ -1614,8 +1614,8 @@ int TimeoutWait(unsigned long reg, unsigned mask, int value, unsigned usec)
 
 void usDelay(unsigned usec)
 {
-	//timer_usDelay(usec);
-	SimpleusDelay(usec);
+	timer_usDelay(usec);
+	//SimpleusDelay(usec);
 }
 
 const u32 *GetID(void)

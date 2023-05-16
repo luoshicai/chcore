@@ -42,7 +42,7 @@ int get_inode_by_filename(const char *name) {
     char buffer[BLOCK_SIZE];
     sd_bread(SUPER_BLOCK, buffer);
     int buffer_size = strlen(buffer);
-    printf("[get_inode_by_filename]read buffer size: %d and buffer: %s\n", buffer_size, buffer);
+    //printf("[get_inode_by_filename]read buffer size: %d and buffer: %s\n", buffer_size, buffer);
     // 匹配文件名,目录格式:filename-inodeNum;filename-inodeNum;……
     int fileName_base = 0;
     int inode_base = 0;
@@ -68,11 +68,11 @@ int get_inode_by_filename(const char *name) {
             // 获取inodeNum返回
             if (find == 1) {
                 int len = i - inode_base;
-                char *inodeNumStr = malloc(len+1);
+                char inodeNumStr[128];
                 strncpy(inodeNumStr, buffer+inode_base, len);
                 inodeNumStr[len] = '\0';
                 int inodeNum = str_to_int(inodeNumStr, len);
-                printf("[get_inode_by_filename]file: %s 's inode num is %d\n", name, inodeNum);
+                //printf("[get_inode_by_filename]file: %s 's inode num is %d\n", name, inodeNum);
                 return inodeNum;
             }
             // 维护fileName_base的起始地址
@@ -90,7 +90,7 @@ int naive_fs_access(const char *name)
     char buffer[BLOCK_SIZE];
     sd_bread(SUPER_BLOCK, buffer);
     int buffer_size = strlen(buffer);
-    printf("[naive_fs_access]read buffer size: %d and buffer: %s\n", buffer_size, buffer);
+    //printf("[naive_fs_access]read buffer size: %d and buffer: %s\n", buffer_size, buffer);
     // 匹配文件名,目录格式:filename-inodeNum;filename-inodeNum;……
     int fileName_base = 0;
     int inode_base = 0;
@@ -138,25 +138,24 @@ int naive_fs_creat(const char *name)
     char buffer[BLOCK_SIZE];
     sd_bread(SUPER_BLOCK, buffer);
     int buffer_size = strlen(buffer);
-    printf("[naive_fs_creat]read buffer size: %d and buffer: %s\n", buffer_size, buffer);
+    //printf("[naive_fs_creat]read buffer size: %d and buffer: %s\n", buffer_size, buffer);
     // 在目录末尾添加
     // 首先找到上一个文件的inode
-    char *inodeNumStr;
+    char inodeNumStr[128];
     int next_inodeNum = 1; 
     for (int i=buffer_size-1; i>0; --i) {
         if (buffer[i]=='-') {
             int len = buffer_size - i - 2;
-            inodeNumStr = malloc(len+2);
             strncpy(inodeNumStr, buffer+i+1, len);
             next_inodeNum = str_to_int(inodeNumStr, len) + 1;
             break;
         }
     }
-    printf("[naive_fs_creat]next inode num:%s to %d\n",inodeNumStr, next_inodeNum);
+    //printf("[naive_fs_creat]next inode num:%s to %d\n",inodeNumStr, next_inodeNum);
     // 将创建的文件加入Buffer中
-    char* Next_InodeNum_str = malloc(128);
+    char Next_InodeNum_str[128];
     int_to_str(next_inodeNum, Next_InodeNum_str);
-    printf("[naive_fs_creat]int_to_str inodeNum: %s\n", Next_InodeNum_str);
+    //printf("[naive_fs_creat]int_to_str inodeNum: %s\n", Next_InodeNum_str);
     int tmp = buffer_size;
     for (int i=0; i<strlen(name); ++i) {
         buffer[tmp] = name[i];
@@ -171,11 +170,9 @@ int naive_fs_creat(const char *name)
     buffer[tmp] = ';';
     tmp++;
     
-    printf("[naive_fs_creat]buffer size change, before %d, after %d\n",buffer_size, strlen(buffer));
+    //printf("[naive_fs_creat]buffer size change, before %d, after %d\n",buffer_size, strlen(buffer));
     // 写回
     sd_bwrite(SUPER_BLOCK, buffer);
-    free(inodeNumStr);
-    free(Next_InodeNum_str);
     /* BLANK END */
     /* LAB 6 TODO END */
     return 0;
@@ -189,7 +186,7 @@ int naive_fs_pread(const char *name, int offset, int size, char *buffer)
     if (offset > BLOCK_SIZE) {
         return 0;
     }
-    printf("[naive_fs_pread] get inode by filename\n");
+    //printf("[naive_fs_pread] get inode by filename\n");
     int inodeNum = get_inode_by_filename(name);
     char read_buffer[BLOCK_SIZE];
     sd_bread(inodeNum, read_buffer);
@@ -211,7 +208,7 @@ int naive_fs_pwrite(const char *name, int offset, int size, const char *buffer)
     if (offset > BLOCK_SIZE || size%BLOCK_SIZE != 0) {
         return 0;
     }
-    printf("[naive_fs_pwrite] get inode by filename\n");
+    //printf("[naive_fs_pwrite] get inode by filename\n");
     int inodeNum = get_inode_by_filename(name);
     sd_bwrite(inodeNum, buffer);
     /* BLANK END */

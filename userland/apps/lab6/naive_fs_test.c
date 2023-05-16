@@ -33,7 +33,7 @@ static int test_naive_fs_empty()
     char pn_buf[24];
 
     strcpy(pn_buf, "testfile0");
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 10; ++i) {
         ret = naive_fs_access(pn_buf);
         if (ret != -1)
             return -1;
@@ -48,7 +48,7 @@ static int test_naive_fs_creat()
     char pn_buf[24];
 
     strcpy(pn_buf, "testfile0");
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 10; ++i) {
         if (naive_fs_access(pn_buf) != -1)
             return -1;
         if (naive_fs_creat(pn_buf) != 0)
@@ -72,7 +72,7 @@ static int test_naive_fs_read_write()
     }
 
     strcpy(pn_buf, "testfile0");
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 10; ++i) {
         if (naive_fs_pwrite(pn_buf, 0, BLOCK_SIZE, buffer + 14 * i) != BLOCK_SIZE)
             return -1;
         if (naive_fs_pread(pn_buf, 20 + i, BLOCK_SIZE / 2, read_buffer) != BLOCK_SIZE / 2)
