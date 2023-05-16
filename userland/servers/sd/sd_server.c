@@ -30,8 +30,8 @@ static int sdcard_readblock(int lba, char *buffer)
 {
 	/* LAB 6 TODO BEGIN */
 	/* BLANK BEGIN */
-	//printf("begin sdcard_readblock\n"); 
-	//printf("lba: %d\n", lba);
+	// printf("begin sdcard_readblock\n"); 
+	// printf("lba: %d\n", lba);
 	u64 offset = (u64)lba * BLOCK_SIZE;
     Seek(offset);
 	int ret = sd_Read(buffer, BLOCK_SIZE);
@@ -44,8 +44,8 @@ static int sdcard_writeblock(int lba, const char *buffer)
 {
 	/* LAB 6 TODO BEGIN */
 	/* BLANK BEGIN */
-	//printf("begin sdcard_writeblock\n"); 
-	//printf("lba: %d\n", lba); 
+	// printf("begin sdcard_writeblock\n"); 
+	// printf("lba: %d\n", lba); 
 	u64 offset = (u64)lba * BLOCK_SIZE;
     Seek(offset);
 	int ret = sd_Write(buffer, BLOCK_SIZE);

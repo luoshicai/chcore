@@ -38,6 +38,8 @@ void chcore_connect_sd_server()
 
         ipc_destroy_msg(procm_ipc_struct, ipc_msg);
     }
+
+    //printf("procm_ipc_struct: %p, sd_ipc_struct: %p\n",sd_ipc_struct, procm_ipc_struct);
 }
 
 int chcore_sd_read(int lba, char *buffer)

@@ -17,9 +17,11 @@ int inner_sd_io_test()
     int ret;
     char buffer[BLOCK_SIZE];
 
-    // printf("begin inner_sd_io_test!\n");
+    //printf("begin inner_sd_io_test!\n");
 
     chcore_connect_sd_server();
+
+    //printf("finish chcore_connect_sd_server\n");
 
     for (int i = 0; i < TEST_BLOCK_NUM; ++i) {
         for (int j = 0; j < BLOCK_SIZE; ++j) {
@@ -38,7 +40,7 @@ int inner_sd_io_test()
         }
     }
      
-    // printf("end inner_sd_io_test!\n");
+    //printf("end inner_sd_io_test!\n");
     return 0;
 }
 

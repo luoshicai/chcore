@@ -231,22 +231,41 @@ char *readline(const char *prompt) {
 
 	/* LAB 5 TODO BEGIN */
 	/* Fill buf and handle tabs with do_complement(). */
-		if (c != '\t')
-			complement_time = 0;
+	if(c == '\t'){
+		complement_time = 0;
+		do{
+			ret = do_complement(buf, complement, complement_time);
+			if(ret == -1){
+				if(complement_time == 0)
+					break;
+				complement_time = 0;
+				continue;
+			}
+			for(j = 0; j < i; j++)
+				chcore_console_printf("\b \b");
+			chcore_console_printf("%s", complement);
+			i = strlen(complement);
+			complement_time ++;
+			
+			c = getch();
+		}while(c == '\t');
 		if(c == '\n' || c == '\r'){
+			chcore_console_putc('\r');
 			chcore_console_putc('\n');
-			break;
+			buf[i] = '\0';
+			return buf;
 		}
-		else if(c == '\t'){
-			if (do_complement(buf, complement, complement_time) == 0) {
-				complement_time++;
-				printf("%s\n", complement);
-			};
-			continue;			
-		}	
-    	buf[i] = c;
+	}
+	else if(c == '\n' || c == '\r'){
+		chcore_console_putc('\r');
+		chcore_console_putc('\n');
+		buf[i] = '\0';
+		return buf;
+	}else{
+		buf[i] = c;
 		i++;
 		chcore_console_putc(c);
+	}
 	/* LAB 5 TODO END */
 	}
 	return buf;
