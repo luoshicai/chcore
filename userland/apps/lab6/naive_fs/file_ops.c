@@ -220,8 +220,46 @@ int naive_fs_unlink(const char *name)
 {
     /* LAB 6 TODO BEGIN */
     /* BLANK BEGIN */
-
+    char buffer[BLOCK_SIZE];
+    sd_bread(SUPER_BLOCK, buffer);
+    // 找到要删除的文件，删除后写回即可
+    int buffer_size = strlen(buffer);
+    //printf("[naive_fs_access]read buffer size: %d and buffer: %s\n", buffer_size, buffer);
+    // 匹配文件名,目录格式:filename-inodeNum;filename-inodeNum;……
+    int fileName_base = 0;
+    int fileName_begin = 0;
+    int inode_base = 0;
+    int find = 0;
+    for (int i=0; i<buffer_size; ++i) {
+        // 找到一个filename-inode映射，看看文件名是否是要找的那个
+        if (buffer[i]=='-') {
+            int j=fileName_base;
+            for (; j<i; ++j) {
+                if (buffer[j] != name[j-fileName_base]) {
+                    break;
+                }
+            }
+            // 如果是要找的文件，获取inodeNum后返回
+            if (j == i) {
+                fileName_begin = fileName_base;
+                find = 1;
+            }
+            // 维护inode_base的起始地址
+            inode_base = i+1;
+        }
+        // 找到一个filename-inode映射，看看是否需要获取inodeNum
+        if (buffer[i]==';') {
+            if (find==1) {
+                char new_buffer[BLOCK_SIZE];
+                strncpy(new_buffer, buffer, fileName_begin);
+                strcpy(new_buffer+fileName_begin, buffer+i+1);
+                sd_bwrite(SUPER_BLOCK, new_buffer);
+            }
+            // 维护fileName_base的起始地址
+            fileName_base = i+1;
+        }
+    }    
     /* BLANK END */
     /* LAB 6 TODO END */
-    return -2;
+    return 0;
 }
